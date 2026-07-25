@@ -2,6 +2,8 @@ import { useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 
+const API_URL = import.meta.env.VITE_API_URL || "https://smarthire-ai-kswb.onrender.com";
+
 function CandidateRegister() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -9,12 +11,10 @@ function CandidateRegister() {
   const [passwordError, setPasswordError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState(null); // {message, type}
-
   const showToast = (message, type = "success") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
-
   const registerUser = async () => {
     // Validation - check password length before calling API
     if (password.length < 6) {
@@ -22,11 +22,10 @@ function CandidateRegister() {
       return;
     }
     setPasswordError("");
-
     setIsSubmitting(true);
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/users/register",
+        `${API_URL}/api/users/register`,
         {
           name,
           email,
@@ -34,7 +33,6 @@ function CandidateRegister() {
           role: "candidate",
         }
       );
-
       showToast(res.data.message || "Registered successfully ✅", "success");
     } catch (err) {
       showToast(err.response?.data?.message || "Registration Failed", "error");
@@ -43,7 +41,6 @@ function CandidateRegister() {
       setIsSubmitting(false);
     }
   };
-
   return (
     <div className="container">
       {toast && (
@@ -63,28 +60,22 @@ function CandidateRegister() {
           {toast.message}
         </div>
       )}
-
       <div className="card">
         <h1>Candidate Registration</h1>
-
         <input
           type="text"
           placeholder="Enter Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
-
         <br /><br />
-
         <input
           type="email"
           placeholder="Enter Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
-
         <br /><br />
-
         <input
           type="password"
           placeholder="Enter Password (min 6 characters)"
@@ -102,15 +93,11 @@ function CandidateRegister() {
             {passwordError}
           </p>
         )}
-
         <br /><br />
-
         <button onClick={registerUser} disabled={isSubmitting}>
           {isSubmitting ? "Registering..." : "Register"}
         </button>
-
         <br /><br />
-
         <Link to="/candidate">
           <button>Back to Login</button>
         </Link>
@@ -118,5 +105,4 @@ function CandidateRegister() {
     </div>
   );
 }
-
 export default CandidateRegister;
