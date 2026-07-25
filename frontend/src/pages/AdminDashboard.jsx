@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { isTokenExpired } from "../utils/auth";
 
+const API_URL = import.meta.env.VITE_API_URL || "https://smarthire-ai-kswb.onrender.com";
+
 function AdminDashboard() {
   const [user, setUser] = useState(null);
   const [stats, setStats] = useState({
@@ -71,7 +73,7 @@ const [jobs, setJobs] = useState([]);
   const fetchPendingCompanies = () => {
     setPendingLoading(true);
     const token = localStorage.getItem("token");
-    fetch("http://localhost:5000/api/admin/pending-companies", {
+    fetch(`${API_URL}/api/admin/pending-companies`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -90,7 +92,7 @@ const [jobs, setJobs] = useState([]);
   const fetchJobs = (page = 1) => {
     const token = localStorage.getItem("token");
     setJobsLoading(true);
-    fetch(`http://localhost:5000/api/admin/jobs?page=${page}&limit=10`, {
+    fetch(`${API_URL}/api/admin/jobs?page=${page}&limit=10`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -111,7 +113,7 @@ const [jobs, setJobs] = useState([]);
   const fetchCandidates = (page = 1) => {
     const token = localStorage.getItem("token");
     setCandidatesLoading(true);
-    fetch(`http://localhost:5000/api/admin/candidates?page=${page}&limit=10`, {
+    fetch(`${API_URL}/api/admin/candidates?page=${page}&limit=10`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -132,7 +134,7 @@ const [jobs, setJobs] = useState([]);
   useEffect(() => {
     const token = localStorage.getItem("token");
 
-    fetch("http://localhost:5000/api/admin/stats", {
+    fetch(`${API_URL}/api/admin/stats`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -156,7 +158,7 @@ const [jobs, setJobs] = useState([]);
     setApprovingId(companyId);
     try {
       const res = await fetch(
-        `http://localhost:5000/api/admin/approve-company/${companyId}`,
+        `${API_URL}/api/admin/approve-company/${companyId}`,
         {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
@@ -189,7 +191,7 @@ const [jobs, setJobs] = useState([]);
 const viewResume = async (userId) => {
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch(`http://localhost:5000/api/users/resume/${userId}`, {
+      const res = await fetch(`${API_URL}/api/users/resume/${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
