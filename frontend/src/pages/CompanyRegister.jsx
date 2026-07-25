@@ -2,6 +2,8 @@ import { useState } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 
+const API_URL = import.meta.env.VITE_API_URL || "https://smarthire-ai-kswb.onrender.com";
+
 function CompanyRegister() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -10,12 +12,10 @@ function CompanyRegister() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState(null); // {message, type}
   const navigate = useNavigate();
-
   const showToast = (message, type = "success") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
-
   const registerCompany = async () => {
     // Validation - check password length before calling API
     if (password.length < 6) {
@@ -23,11 +23,10 @@ function CompanyRegister() {
       return;
     }
     setPasswordError("");
-
     setIsSubmitting(true);
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/users/register",
+        `${API_URL}/api/users/register`,
         {
           name,
           email,
@@ -35,7 +34,6 @@ function CompanyRegister() {
           role: "company",
         }
       );
-
       showToast(res.data.message || "Registered successfully ✅", "success");
       setTimeout(() => navigate("/company"), 1200); // let the toast show before redirecting
     } catch (err) {
@@ -45,7 +43,6 @@ function CompanyRegister() {
       setIsSubmitting(false);
     }
   };
-
   return (
     <div className="container">
       {toast && (
@@ -65,28 +62,22 @@ function CompanyRegister() {
           {toast.message}
         </div>
       )}
-
       <div className="card">
         <h1>Company Registration</h1>
-
         <input
           type="text"
           placeholder="Enter Company Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
-
         <br /><br />
-
         <input
           type="email"
           placeholder="Enter Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
-
         <br /><br />
-
         <input
           type="password"
           placeholder="Enter Password (min 6 characters)"
@@ -104,15 +95,11 @@ function CompanyRegister() {
             {passwordError}
           </p>
         )}
-
         <br /><br />
-
         <button onClick={registerCompany} disabled={isSubmitting}>
           {isSubmitting ? "Registering..." : "Register"}
         </button>
-
         <br /><br />
-
         <Link to="/company">
           <button>Back to Login</button>
         </Link>
@@ -120,5 +107,4 @@ function CompanyRegister() {
     </div>
   );
 }
-
 export default CompanyRegister;
