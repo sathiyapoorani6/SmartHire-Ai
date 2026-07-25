@@ -3,6 +3,8 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { isTokenExpired } from "../utils/auth";
 
+const API_URL = import.meta.env.VITE_API_URL || "https://smarthire-ai-kswb.onrender.com";
+
 function CompanyDashboard() {
   const [user, setUser] = useState(null);
   const [myJobs, setMyJobs] = useState([]);
@@ -77,7 +79,7 @@ function CompanyDashboard() {
   const fetchMyJobs = async (companyId) => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/jobs/company/" + companyId
+        `${API_URL}/api/jobs/company/${companyId}`
       );
       setMyJobs(res.data.jobs);
     } catch (err) {
@@ -91,7 +93,7 @@ function CompanyDashboard() {
 const viewResume = async (candidateId) => {
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch(`http://localhost:5000/api/users/resume/${candidateId}`, {
+      const res = await fetch(`${API_URL}/api/users/resume/${candidateId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -113,7 +115,7 @@ const viewResume = async (candidateId) => {
     setIsPosting(true);
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/jobs/post",
+        `${API_URL}/api/jobs/post`,
         {
           title: title,
           description: description,
@@ -161,7 +163,7 @@ const viewResume = async (candidateId) => {
     const token = localStorage.getItem("token");
     try {
       const res = await axios.put(
-        `http://localhost:5000/api/jobs/schedule-interview/${jobId}`,
+        `${API_URL}/api/jobs/schedule-interview/${jobId}`,
         {
           candidateId,
           interviewDate: form.interviewDate,
@@ -182,7 +184,7 @@ const viewResume = async (candidateId) => {
     const token = localStorage.getItem("token");
     try {
       const res = await axios.put(
-        `http://localhost:5000/api/jobs/update-status/${jobId}`,
+        `${API_URL}/api/jobs/update-status/${jobId}`,
         { candidateId, status },
         { headers: { Authorization: `Bearer ${token}` } }
       );
