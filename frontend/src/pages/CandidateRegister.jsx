@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
+import { API_BASE_URL } from "../config/api";
 
 function CandidateRegister() {
   const [name, setName] = useState("");
@@ -26,7 +27,7 @@ function CandidateRegister() {
     setIsSubmitting(true);
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/users/register",
+        `${API_BASE_URL}/api/users/register`,
         {
           name,
           email,
@@ -98,25 +99,4 @@ function CandidateRegister() {
           }}
         />
         {passwordError && (
-          <p style={{ color: "#ef4444", fontSize: "13px", textAlign: "left", marginTop: "6px" }}>
-            {passwordError}
-          </p>
-        )}
-
-        <br /><br />
-
-        <button onClick={registerUser} disabled={isSubmitting}>
-          {isSubmitting ? "Registering..." : "Register"}
-        </button>
-
-        <br /><br />
-
-        <Link to="/candidate">
-          <button>Back to Login</button>
-        </Link>
-      </div>
-    </div>
-  );
-}
-
-export default CandidateRegister;
+          <p style={{ color: "#ef4444", fontSize:
