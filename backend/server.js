@@ -14,7 +14,10 @@ const adminRoutes = require("./routes/adminRoutes");
 connectDB();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: "https://smart-hire-ai-lac.vercel.app",
+  credentials: true
+}));
 app.use(express.json());
 // Resumes are served through an authenticated route below, not as static files
 app.use("/api/admin", adminRoutes);
