@@ -20,6 +20,8 @@ function isTokenExpired(token) {
   return decoded.exp < nowInSeconds;
 }
 
+const API_URL = import.meta.env.VITE_API_URL || "https://smarthire-ai-kswb.onrender.com";
+
 function CandidateDashboard() {
   const [user, setUser] = useState(null);
   const [jobs, setJobs] = useState([]);
@@ -77,7 +79,7 @@ function CandidateDashboard() {
   const fetchJobs = async (page = 1) => {
     try {
       const res = await axios.get(
-        `http://localhost:5000/api/jobs/all?page=${page}&limit=10`
+        `${API_URL}/api/jobs/all?page=${page}&limit=10`
       );
       setJobs(res.data.jobs);
       setTotalPages(res.data.totalPages || 1);
@@ -95,7 +97,7 @@ function CandidateDashboard() {
     setApplyingJobId(jobId);
     try {
       const res = await axios.post(
-        `http://localhost:5000/api/jobs/apply/${jobId}`,
+        `${API_URL}/api/jobs/apply/${jobId}`,
         {
           candidateId: user.id,
         },
@@ -130,7 +132,7 @@ function CandidateDashboard() {
     setIsUploading(true);
     try {
       const res = await axios.post(
-        `http://localhost:5000/api/users/upload-resume/${user.id}`,
+        `${API_URL}/api/users/upload-resume/${user.id}`,
         formData,
         {
           headers: {
