@@ -1,5 +1,6 @@
 const dns = require('dns');
 dns.setServers(['8.8.8.8', '8.8.4.4']);
+dns.setDefaultResultOrder('ipv4first'); // avoid ENETUNREACH errors over IPv6 on Render
 require("dotenv").config();
 const fs = require("fs");
 const path = require("path");
