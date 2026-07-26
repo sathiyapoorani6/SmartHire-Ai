@@ -2,9 +2,11 @@ const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 const User = require("../models/user");
 const upload = require("../config/multerConfig");
 const { verifyToken } = require("../middleware/authMiddleware");
+const { sendResetPasswordEmail } = require("../utils/sendEmail");
 
 // Register User
 router.post("/register", async (req, res) => {
@@ -116,6 +118,97 @@ router.post("/login", async (req, res) => {
         email: user.email,
         role: user.role,
       },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+// Forgot Password - generates a reset token and emails a reset link
+router.post("/forgot-password", async (req, res) => {
+  try {
+    const { email, role } = req.body;
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const user = await User.findOne({ email: normalizedEmail, role });
+
+    // Always respond with success, even if the user doesn't exist,
+    // so we don't reveal which emails are registered.
+    if (!user) {
+      return res.json({
+        success: true,
+        message: "If an account with that email exists, a reset link has been sent.",
+      });
+    }
+
+    // Generate a random token; store only its hash in the DB
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+
+    user.resetPasswordToken = hashedToken;
+    user.resetPasswordExpires = Date.now() + 30 * 60 * 1000; // 30 minutes
+    await user.save();
+
+    const frontendUrl = process.env.FRONTEND_URL || "https://smart-hire-ai-lac.vercel.app";
+    const resetLink = `${frontendUrl}/reset-password/${rawToken}?role=${role}`;
+
+    await sendResetPasswordEmail({
+      toEmail: user.email,
+      name: user.name,
+      resetLink,
+    });
+
+    res.json({
+      success: true,
+      message: "If an account with that email exists, a reset link has been sent.",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+// Reset Password - verifies the token and sets a new password
+router.post("/reset-password/:token", async (req, res) => {
+  try {
+    const { password, role } = req.body;
+    const { token } = req.params;
+
+    if (!password || password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 6 characters",
+      });
+    }
+
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { $gt: Date.now() },
+      role,
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Reset link is invalid or has expired. Please request a new one.",
+      });
+    }
+
+    user.password = await bcrypt.hash(password, 10);
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: "Password reset successfully. You can now log in.",
     });
   } catch (error) {
     res.status(500).json({
