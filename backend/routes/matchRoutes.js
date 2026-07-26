@@ -1,6 +1,5 @@
 const express = require("express");
 const router = express.Router();
-const path = require("path");
 const Job = require("../models/Job");
 const User = require("../models/user");
 const { matchResumeToJob } = require("../utils/resumeMatcher");
@@ -27,10 +26,9 @@ router.post("/match/:jobId/:candidateId", verifyToken, verifyRole("company", "ad
       });
     }
 
-    const resumePath = path.join(__dirname, "..", candidate.resume);
-
+    // candidate.resume is now a Cloudinary URL — pass it straight through
     const matchData = await matchResumeToJob({
-      resumePath,
+      resumeUrl: candidate.resume,
       jobTitle: job.title,
       jobDescription: job.description,
     });
