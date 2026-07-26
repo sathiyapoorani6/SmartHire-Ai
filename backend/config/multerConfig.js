@@ -1,6 +1,5 @@
 const multer = require("multer");
 const path = require("path");
-const { storage } = require("./cloudinaryConfig");
 
 const allowedMimeTypes = [
   "application/pdf",
@@ -9,7 +8,7 @@ const allowedMimeTypes = [
 ];
 
 const upload = multer({
-  storage: storage,
+  storage: multer.memoryStorage(), // keep file in memory; route handler uploads it to Cloudinary
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
   fileFilter: function (req, file, cb) {
     const allowedExts = [".pdf", ".doc", ".docx"];
