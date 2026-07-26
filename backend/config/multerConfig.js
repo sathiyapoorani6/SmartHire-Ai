@@ -1,18 +1,6 @@
 const multer = require("multer");
 const path = require("path");
-const crypto = require("crypto");
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/");
-  },
-  filename: function (req, file, cb) {
-    // Generate a random safe filename instead of trusting the user's original filename
-    const ext = path.extname(file.originalname).toLowerCase();
-    const safeName = crypto.randomBytes(16).toString("hex") + ext;
-    cb(null, safeName);
-  },
-});
+const { storage } = require("./cloudinaryConfig");
 
 const allowedMimeTypes = [
   "application/pdf",
