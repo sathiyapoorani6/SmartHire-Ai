@@ -77,6 +77,10 @@ function CandidateLogin() {
           {isSubmitting ? "Logging in..." : "Login"}
         </button>
         <br /><br />
+        <Link to="/forgot-password?role=candidate">
+          <button>Forgot Password?</button>
+        </Link>
+        <br /><br />
         <Link to="/candidate-register">
           <button>New user? Register here</button>
         </Link>
