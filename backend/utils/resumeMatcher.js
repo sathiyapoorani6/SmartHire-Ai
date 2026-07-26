@@ -1,4 +1,4 @@
-const fs = require("fs");
+const https = require("https");
 const path = require("path");
 const mammoth = require("mammoth");
 const pdfParseModule = require("pdf-parse");
@@ -7,16 +7,31 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Extracts plain text from a resume file — supports PDF and DOCX/DOC
-async function extractResumeText(resumePath) {
-  const ext = path.extname(resumePath).toLowerCase();
+// Downloads a file from a URL (e.g. Cloudinary) into memory as a Buffer
+function downloadBuffer(url) {
+  return new Promise((resolve, reject) => {
+    https
+      .get(url, (res) => {
+        const chunks = [];
+        res.on("data", (chunk) => chunks.push(chunk));
+        res.on("end", () => resolve(Buffer.concat(chunks)));
+        res.on("error", reject);
+      })
+      .on("error", reject);
+  });
+}
+
+// Extracts plain text from a resume file — supports PDF and DOCX/DOC.
+// resumeUrl is now a Cloudinary URL rather than a local disk path.
+async function extractResumeText(resumeUrl) {
+  const ext = path.extname(resumeUrl.split("?")[0]).toLowerCase();
+  const buffer = await downloadBuffer(resumeUrl);
 
   if (ext === ".pdf") {
-    const dataBuffer = fs.readFileSync(resumePath);
-    const data = await pdfParse(dataBuffer);
+    const data = await pdfParse(buffer);
     return data.text;
   } else if (ext === ".docx" || ext === ".doc") {
-    const result = await mammoth.extractRawText({ path: resumePath });
+    const result = await mammoth.extractRawText({ buffer });
     return result.value;
   } else {
     throw new Error("Unsupported resume file format");
@@ -24,9 +39,9 @@ async function extractResumeText(resumePath) {
 }
 
 // Compares a resume against a job description using Gemini and returns a match report
-async function matchResumeToJob({ resumePath, jobTitle, jobDescription }) {
+async function matchResumeToJob({ resumeUrl, jobTitle, jobDescription }) {
   try {
-    const resumeText = await extractResumeText(resumePath);
+    const resumeText = await extractResumeText(resumeUrl);
 
     if (!resumeText) {
       return null;
