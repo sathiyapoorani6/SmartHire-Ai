@@ -26,6 +26,14 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true, // candidates/admins are approved by default; companies get set to false at registration
   },
+  resetPasswordToken: {
+    type: String,
+    default: null,
+  },
+  resetPasswordExpires: {
+    type: Date,
+    default: null,
+  },
 });
 
 module.exports = mongoose.models.User || mongoose.model("User", userSchema);
