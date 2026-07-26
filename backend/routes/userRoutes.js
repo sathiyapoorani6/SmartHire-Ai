@@ -268,9 +268,23 @@ router.get("/resume/:userId", verifyToken, async (req, res) => {
       });
     }
 
-    const path = require("path");
-    const resumePath = path.join(__dirname, "..", targetUser.resume);
-    res.sendFile(resumePath);
+    // Resume is now stored on Cloudinary; stream it through this route so the
+    // existing frontend fetch()+blob flow (with auth header) keeps working unchanged.
+    const https = require("https");
+    https
+      .get(targetUser.resume, (fileRes) => {
+        res.setHeader(
+          "Content-Type",
+          fileRes.headers["content-type"] || "application/octet-stream"
+        );
+        fileRes.pipe(res);
+      })
+      .on("error", () => {
+        res.status(500).json({
+          success: false,
+          message: "Failed to load resume",
+        });
+      });
   } catch (error) {
     res.status(500).json({
       success: false,
