@@ -77,6 +77,10 @@ function CompanyLogin() {
           {isSubmitting ? "Logging in..." : "Login"}
         </button>
         <br /><br />
+        <Link to="/forgot-password?role=company">
+          <button>Forgot Password?</button>
+        </Link>
+        <br /><br />
         <Link to="/company-register">
           <button>New company? Register here</button>
         </Link>
