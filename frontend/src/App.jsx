@@ -10,6 +10,8 @@ import CandidateRegister from "./pages/CandidateRegister";
 import AdminDashboard from "./pages/AdminDashboard";
 import CompanyDashboard from "./pages/CompanyDashboard";
 import CandidateDashboard from "./pages/CandidateDashboard";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -39,6 +41,8 @@ function App() {
       <Route path="/admin-dashboard" element={<AdminDashboard />} />
       <Route path="/company-dashboard" element={<CompanyDashboard />} />
       <Route path="/candidate-dashboard" element={<CandidateDashboard />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password/:token" element={<ResetPassword />} />
     </Routes>
   );
 }
