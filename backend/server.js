@@ -1,6 +1,8 @@
 const dns = require('dns');
 dns.setServers(['8.8.8.8', '8.8.4.4']);
 require("dotenv").config();
+const fs = require("fs");
+const path = require("path");
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
@@ -12,6 +14,12 @@ const matchRoutes = require("./routes/matchRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 // Connect MongoDB
 connectDB();
+
+// Make sure the uploads folder exists before multer tries to write resumes into it
+const uploadsDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
 // Middleware
 app.use(cors({
