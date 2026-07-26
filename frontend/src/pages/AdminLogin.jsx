@@ -76,6 +76,10 @@ function AdminLogin() {
         <button onClick={loginAdmin} disabled={isSubmitting}>
           {isSubmitting ? "Logging in..." : "Login"}
         </button>
+        <br /><br />
+        <Link to="/forgot-password?role=admin">
+          <button>Forgot Password?</button>
+        </Link>
       </div>
     </div>
   );
