@@ -3,8 +3,10 @@ const router = express.Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
+const path = require("path");
 const User = require("../models/user");
 const upload = require("../config/multerConfig");
+const cloudinary = require("../config/cloudinaryConfig");
 const { verifyToken } = require("../middleware/authMiddleware");
 const { sendResetPasswordEmail } = require("../utils/sendEmail");
 
@@ -231,13 +233,39 @@ router.post("/upload-resume/:userId", verifyToken, upload.single("resume"), asyn
       });
     }
 
-    user.resume = req.file.path.replace(/\\/g, "/");
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "No file uploaded",
+      });
+    }
+
+    const ext = path.extname(req.file.originalname).toLowerCase().replace(".", "");
+
+    // Upload the in-memory file buffer to Cloudinary
+    const uploadResult = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: "smarthire-resumes",
+          resource_type: "raw", // required for PDF/DOC/DOCX (non-image files)
+          format: ext,
+          public_id: `${Date.now()}-${path.parse(req.file.originalname).name}`,
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      uploadStream.end(req.file.buffer);
+    });
+
+    user.resume = uploadResult.secure_url;
     await user.save();
 
     res.json({
       success: true,
       message: "Resume Uploaded Successfully",
-      resumePath: req.file.path,
+      resumePath: uploadResult.secure_url,
     });
   } catch (error) {
     res.status(500).json({
