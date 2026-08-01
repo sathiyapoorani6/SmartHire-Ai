@@ -7,11 +7,27 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Downloads a file from a URL (e.g. Cloudinary) into memory as a Buffer
-function downloadBuffer(url) {
+// Downloads a file from a URL (e.g. Cloudinary) into memory as a Buffer.
+// Follows redirects (3xx) up to a small limit, since Cloudinary/CDNs can
+// redirect and the old version silently returned an empty/garbled buffer.
+function downloadBuffer(url, redirectsLeft = 5) {
   return new Promise((resolve, reject) => {
     https
       .get(url, (res) => {
+        if (
+          res.statusCode >= 300 &&
+          res.statusCode < 400 &&
+          res.headers.location &&
+          redirectsLeft > 0
+        ) {
+          res.resume(); // discard this response body
+          return resolve(downloadBuffer(res.headers.location, redirectsLeft - 1));
+        }
+
+        if (res.statusCode >= 400) {
+          return reject(new Error(`Failed to download resume: HTTP ${res.statusCode}`));
+        }
+
         const chunks = [];
         res.on("data", (chunk) => chunks.push(chunk));
         res.on("end", () => resolve(Buffer.concat(chunks)));
