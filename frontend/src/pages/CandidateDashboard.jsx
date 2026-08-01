@@ -31,6 +31,9 @@ function CandidateDashboard() {
   const [applyingJobId, setApplyingJobId] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [toast, setToast] = useState(null); // {message, type}
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
   const navigate = useNavigate();
 
   const showToast = (message, type = "success") => {
@@ -63,6 +66,10 @@ function CandidateDashboard() {
 
     setUser(JSON.parse(storedUser));
     fetchJobs();
+    fetchNotifications();
+
+    // Poll for new notifications every 30 seconds
+    const notifInterval = setInterval(fetchNotifications, 30 * 1000);
 
     // 👇 Also check every minute in case the tab is left open past expiry
     const interval = setInterval(() => {
@@ -72,9 +79,45 @@ function CandidateDashboard() {
       }
     }, 60 * 1000);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      clearInterval(notifInterval);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
+
+  const fetchNotifications = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    try {
+      const res = await axios.get(`${API_URL}/api/notifications`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setNotifications(res.data.notifications || []);
+      setUnreadCount(res.data.unreadCount || 0);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const openNotifications = async () => {
+    setShowNotifications((prev) => !prev);
+
+    if (unreadCount > 0) {
+      const token = localStorage.getItem("token");
+      try {
+        await axios.put(
+          `${API_URL}/api/notifications/read-all`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setUnreadCount(0);
+        setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+      } catch (err) {
+        console.log(err);
+      }
+    }
+  };
 
   const fetchJobs = async (page = 1) => {
     try {
@@ -177,9 +220,92 @@ function CandidateDashboard() {
       )}
 
       <div className="card">
-        <h1>Welcome, {user.name} 👋</h1>
-        <p>Email: {user.email}</p>
-        <p>Role: {user.role}</p>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div>
+            <h1>Welcome, {user.name} 👋</h1>
+            <p>Email: {user.email}</p>
+            <p>Role: {user.role}</p>
+          </div>
+
+          <div style={{ position: "relative" }}>
+            <button
+              onClick={openNotifications}
+              style={{
+                position: "relative",
+                background: "#fff",
+                border: "1px solid #ccc",
+                borderRadius: "50%",
+                width: "40px",
+                height: "40px",
+                cursor: "pointer",
+                fontSize: "18px",
+              }}
+              title="Notifications"
+            >
+              🔔
+              {unreadCount > 0 && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: "-4px",
+                    right: "-4px",
+                    background: "#ef4444",
+                    color: "#fff",
+                    borderRadius: "50%",
+                    fontSize: "11px",
+                    padding: "2px 6px",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+
+            {showNotifications && (
+              <div
+                style={{
+                  position: "absolute",
+                  right: 0,
+                  top: "48px",
+                  width: "300px",
+                  maxHeight: "350px",
+                  overflowY: "auto",
+                  background: "#fff",
+                  border: "1px solid #ddd",
+                  borderRadius: "8px",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                  zIndex: 1000,
+                  textAlign: "left",
+                }}
+              >
+                {notifications.length === 0 && (
+                  <p style={{ padding: "12px", margin: 0, color: "#888" }}>
+                    No notifications yet.
+                  </p>
+                )}
+                {notifications.map((n) => (
+                  <div
+                    key={n._id}
+                    style={{
+                      padding: "10px 12px",
+                      borderBottom: "1px solid #eee",
+                      fontSize: "14px",
+                    }}
+                  >
+                    <p style={{ margin: 0 }}>{n.message}</p>
+                    <p style={{ margin: "4px 0 0 0", fontSize: "11px", color: "#999" }}>
+                      {new Date(n.createdAt).toLocaleString("en-IN", {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
 
         <br />
         <button onClick={handleLogout}>Logout</button>
