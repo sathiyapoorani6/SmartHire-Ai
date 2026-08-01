@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 
@@ -11,9 +11,11 @@ function CandidateRegister() {
   const [passwordError, setPasswordError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState(null); // {message, type}
+  const toastTimerRef = useRef(null);
   const showToast = (message, type = "success") => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
+    toastTimerRef.current = setTimeout(() => setToast(null), 3000);
   };
   const registerUser = async () => {
     // Validation - check password length before calling API
@@ -62,41 +64,43 @@ function CandidateRegister() {
       )}
       <div className="card">
         <h1>Candidate Registration</h1>
-        <input
-          type="text"
-          placeholder="Enter Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <br /><br />
-        <input
-          type="email"
-          placeholder="Enter Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <br /><br />
-        <input
-          type="password"
-          placeholder="Enter Password (min 6 characters)"
-          value={password}
-          onChange={(e) => {
-            setPassword(e.target.value);
-            if (passwordError) setPasswordError("");
-          }}
-          style={{
-            borderColor: passwordError ? "#ef4444" : undefined,
-          }}
-        />
-        {passwordError && (
-          <p style={{ color: "#ef4444", fontSize: "13px", textAlign: "left", marginTop: "6px" }}>
-            {passwordError}
-          </p>
-        )}
-        <br /><br />
-        <button onClick={registerUser} disabled={isSubmitting}>
-          {isSubmitting ? "Registering..." : "Register"}
-        </button>
+        <form onSubmit={(e) => { e.preventDefault(); registerUser(); }}>
+          <input
+            type="text"
+            placeholder="Enter Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <br /><br />
+          <input
+            type="email"
+            placeholder="Enter Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <br /><br />
+          <input
+            type="password"
+            placeholder="Enter Password (min 6 characters)"
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              if (passwordError) setPasswordError("");
+            }}
+            style={{
+              borderColor: passwordError ? "#ef4444" : undefined,
+            }}
+          />
+          {passwordError && (
+            <p style={{ color: "#ef4444", fontSize: "13px", textAlign: "left", marginTop: "6px" }}>
+              {passwordError}
+            </p>
+          )}
+          <br /><br />
+          <button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Registering..." : "Register"}
+          </button>
+        </form>
         <br /><br />
         <Link to="/candidate">
           <button>Back to Login</button>
