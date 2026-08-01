@@ -3,6 +3,7 @@ const router = express.Router();
 const Job = require("../models/Job");
 const User = require("../models/user");
 const sendApplicationEmail = require("../utils/sendEmail");
+const Notification = require("../models/Notification");
 const { matchResumeToJob } = require("../utils/resumeMatcher");
 const { verifyToken, verifyRole } = require("../middleware/authMiddleware");
 
@@ -218,6 +219,12 @@ router.put("/schedule-interview/:jobId", verifyToken, verifyRole("company"), asy
       });
     }
 
+    await Notification.create({
+      recipient: candidateId,
+      message: `Interview scheduled for "${job.title}" — check your dashboard for details.`,
+      jobTitle: job.title,
+    });
+
     res.json({
       success: true,
       message: "Interview Scheduled Successfully",
@@ -284,6 +291,19 @@ router.put("/update-status/:jobId", verifyToken, verifyRole("company"), async (r
         jobTitle: job.title,
         isStatusUpdate: true,
         newStatus: status,
+      });
+    }
+
+    if (status === "Selected" || status === "Rejected") {
+      const message =
+        status === "Selected"
+          ? `Congrats! You were selected for "${job.title}" 🎉`
+          : `Update on "${job.title}": your application was not selected this time.`;
+
+      await Notification.create({
+        recipient: candidateId,
+        message,
+        jobTitle: job.title,
       });
     }
 
