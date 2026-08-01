@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { isTokenExpired } from "../utils/auth";
 
@@ -29,9 +29,11 @@ const [jobs, setJobs] = useState([]);
 
   const navigate = useNavigate();
 
+  const toastTimerRef = useRef(null);
   const showToast = (message, type = "success") => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
+    toastTimerRef.current = setTimeout(() => setToast(null), 3000);
   };
 
   // Logs the user out and sends them back to login, with an optional reason message
@@ -76,9 +78,15 @@ const [jobs, setJobs] = useState([]);
     fetch(`${API_URL}/api/admin/pending-companies`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((res) => res.json())
+      .then((res) => {
+        if (res.status === 401) {
+          forceLogout("Session expired. Please login again.");
+          return null;
+        }
+        return res.json();
+      })
       .then((data) => {
-        if (data.success) {
+        if (data?.success) {
           setPendingCompanies(data.companies);
         }
         setPendingLoading(false);
@@ -95,9 +103,15 @@ const [jobs, setJobs] = useState([]);
     fetch(`${API_URL}/api/admin/jobs?page=${page}&limit=10`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((res) => res.json())
+      .then((res) => {
+        if (res.status === 401) {
+          forceLogout("Session expired. Please login again.");
+          return null;
+        }
+        return res.json();
+      })
       .then((data) => {
-        if (data.success) {
+        if (data?.success) {
           setJobs(data.jobs);
           setJobsTotalPages(data.totalPages || 1);
           setJobsPage(data.currentPage || 1);
@@ -116,9 +130,15 @@ const [jobs, setJobs] = useState([]);
     fetch(`${API_URL}/api/admin/candidates?page=${page}&limit=10`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((res) => res.json())
+      .then((res) => {
+        if (res.status === 401) {
+          forceLogout("Session expired. Please login again.");
+          return null;
+        }
+        return res.json();
+      })
       .then((data) => {
-        if (data.success) {
+        if (data?.success) {
           setCandidates(data.candidates);
           setCandidatesTotalPages(data.totalPages || 1);
           setCandidatesPage(data.currentPage || 1);
@@ -132,14 +152,24 @@ const [jobs, setJobs] = useState([]);
   };
 
   useEffect(() => {
+    // 👇 Don't fire any of these requests until we know the token is valid -
+    // avoids a burst of unauthenticated calls that silently fail and leave
+    // every section stuck on its loading spinner.
     const token = localStorage.getItem("token");
+    if (!token || isTokenExpired(token)) return;
 
     fetch(`${API_URL}/api/admin/stats`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((res) => res.json())
+      .then((res) => {
+        if (res.status === 401) {
+          forceLogout("Session expired. Please login again.");
+          return null;
+        }
+        return res.json();
+      })
       .then((data) => {
-        if (data.success) {
+        if (data?.success) {
           setStats(data);
         }
         setStatsLoading(false);
