@@ -5,7 +5,7 @@ const User = require("../models/user");
 const { matchResumeToJob } = require("../utils/resumeMatcher");
 const { verifyToken, verifyRole } = require("../middleware/authMiddleware");
 
-router.post("/match/:jobId/:candidateId", verifyToken, verifyRole("company", "admin"), async (req, res) => {
+router.post("/rank/:jobId", verifyToken, verifyRole("company", "admin"), async (req, res) => {
   try {
     const { jobId, candidateId } = req.params;
 
