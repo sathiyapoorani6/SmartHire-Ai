@@ -1,4 +1,3 @@
-const path = require("path");
 const express = require("express");
 const router = express.Router();
 const Job = require("../models/Job");
@@ -96,10 +95,10 @@ router.post("/apply/:jobId", verifyToken, verifyRole("candidate"), async (req, r
     };
 
     if (candidate?.resume) {
-      const resumePath = path.join(__dirname, "..", candidate.resume);
-
+      // candidate.resume is a Cloudinary URL — pass it straight through,
+      // matchResumeToJob expects resumeUrl, not a local file path
       const aiResult = await matchResumeToJob({
-        resumePath,
+        resumeUrl: candidate.resume,
         jobTitle: job.title,
         jobDescription: job.description,
       });
