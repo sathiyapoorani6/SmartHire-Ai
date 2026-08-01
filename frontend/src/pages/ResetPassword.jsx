@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate, useParams, useSearchParams, Link } from "react-router-dom";
 import axios from "axios";
 
@@ -16,9 +16,11 @@ function ResetPassword() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState(null);
 
+  const toastTimerRef = useRef(null);
   const showToast = (message, type = "success") => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     setToast({ message, type });
-    setTimeout(() => setToast(null), 4000);
+    toastTimerRef.current = setTimeout(() => setToast(null), 4000);
   };
 
   const handleSubmit = async () => {
@@ -68,36 +70,38 @@ function ResetPassword() {
       <div className="card">
         <h1>Reset Password</h1>
 
-        <input
-          type="password"
-          placeholder="New Password (min 6 characters)"
-          value={password}
-          onChange={(e) => {
-            setPassword(e.target.value);
-            if (passwordError) setPasswordError("");
-          }}
-          style={{ borderColor: passwordError ? "#ef4444" : undefined }}
-        />
-        <br /><br />
-        <input
-          type="password"
-          placeholder="Confirm New Password"
-          value={confirmPassword}
-          onChange={(e) => {
-            setConfirmPassword(e.target.value);
-            if (passwordError) setPasswordError("");
-          }}
-          style={{ borderColor: passwordError ? "#ef4444" : undefined }}
-        />
-        {passwordError && (
-          <p style={{ color: "#ef4444", fontSize: "13px", textAlign: "left", marginTop: "6px" }}>
-            {passwordError}
-          </p>
-        )}
-        <br /><br />
-        <button onClick={handleSubmit} disabled={isSubmitting}>
-          {isSubmitting ? "Resetting..." : "Reset Password"}
-        </button>
+        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+          <input
+            type="password"
+            placeholder="New Password (min 6 characters)"
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              if (passwordError) setPasswordError("");
+            }}
+            style={{ borderColor: passwordError ? "#ef4444" : undefined }}
+          />
+          <br /><br />
+          <input
+            type="password"
+            placeholder="Confirm New Password"
+            value={confirmPassword}
+            onChange={(e) => {
+              setConfirmPassword(e.target.value);
+              if (passwordError) setPasswordError("");
+            }}
+            style={{ borderColor: passwordError ? "#ef4444" : undefined }}
+          />
+          {passwordError && (
+            <p style={{ color: "#ef4444", fontSize: "13px", textAlign: "left", marginTop: "6px" }}>
+              {passwordError}
+            </p>
+          )}
+          <br /><br />
+          <button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Resetting..." : "Reset Password"}
+          </button>
+        </form>
         <br /><br />
         <Link to={`/${role}`}>
           <button>Back to Login</button>
