@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import axios from "axios";
 
@@ -14,9 +14,11 @@ function ForgotPassword() {
   const [toast, setToast] = useState(null);
   const [submitted, setSubmitted] = useState(false);
 
+  const toastTimerRef = useRef(null);
   const showToast = (message, type = "success") => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     setToast({ message, type });
-    setTimeout(() => setToast(null), 4000);
+    toastTimerRef.current = setTimeout(() => setToast(null), 4000);
   };
 
   const handleSubmit = async () => {
@@ -67,7 +69,7 @@ function ForgotPassword() {
             reset link. Please check your inbox (and spam folder).
           </p>
         ) : (
-          <>
+          <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
             <p style={{ margin: "8px 0 16px", fontSize: "14px", color: "#555" }}>
               Enter your account email and we'll send you a link to reset your password.
             </p>
@@ -89,10 +91,10 @@ function ForgotPassword() {
               onChange={(e) => setEmail(e.target.value)}
             />
             <br /><br />
-            <button onClick={handleSubmit} disabled={isSubmitting}>
+            <button type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Sending..." : "Send Reset Link"}
             </button>
-          </>
+          </form>
         )}
 
         <br /><br />
