@@ -13,6 +13,7 @@ const jobRoutes = require("./routes/jobRoutes");
 const app = express();
 const matchRoutes = require("./routes/matchRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
 // Connect MongoDB
 connectDB();
 
@@ -46,6 +47,7 @@ app.get("/api/message", (req, res) => {
 app.use("/api/users", userRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/match", matchRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // 👇 Global error handler - catches multer errors (bad file type / too large)
 // and any other error passed via next(err), so the frontend always gets clean JSON
