@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { isTokenExpired } from "../utils/auth";
@@ -8,6 +8,8 @@ const API_URL = import.meta.env.VITE_API_URL || "https://smarthire-ai-kswb.onren
 function CompanyDashboard() {
   const [user, setUser] = useState(null);
   const [myJobs, setMyJobs] = useState([]);
+  const [jobsCurrentPage, setJobsCurrentPage] = useState(1);
+  const [jobsTotalPages, setJobsTotalPages] = useState(1);
   const navigate = useNavigate();
 
   const [title, setTitle] = useState("");
@@ -26,9 +28,11 @@ function CompanyDashboard() {
   // Tracks which job's "Rank All Applicants" call is currently in flight
   const [rankingJobId, setRankingJobId] = useState(null);
 
+  const toastTimerRef = useRef(null);
   const showToast = (message, type = "success") => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
+    toastTimerRef.current = setTimeout(() => setToast(null), 3000);
   };
 
   // Logs the user out and sends them back to login, with an optional reason message
@@ -79,13 +83,21 @@ function CompanyDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
 
-  const fetchMyJobs = async (companyId) => {
+  const fetchMyJobs = async (companyId, page = 1) => {
+    const token = localStorage.getItem("token");
     try {
       const res = await axios.get(
-        `${API_URL}/api/jobs/company/${companyId}`
+        `${API_URL}/api/jobs/company/${companyId}?page=${page}&limit=10`,
+        { headers: { Authorization: `Bearer ${token}` } } // 👈 was missing — this route requires auth
       );
       setMyJobs(res.data.jobs);
+      setJobsTotalPages(res.data.totalPages || 1);
+      setJobsCurrentPage(res.data.currentPage || 1);
     } catch (err) {
+      if (err.response?.status === 401) {
+        forceLogout(err.response?.data?.message || "Session expired. Please login again.");
+        return;
+      }
       console.log(err);
     }
   };
@@ -177,7 +189,7 @@ const viewResume = async (candidateId) => {
       );
 
       showToast(res.data.message || "Interview scheduled ✅", "success");
-      fetchMyJobs(user.id);
+      fetchMyJobs(user.id, jobsCurrentPage);
     } catch (err) {
       handleAuthError(err, "Failed to schedule interview");
     }
@@ -193,7 +205,7 @@ const viewResume = async (candidateId) => {
       );
 
       showToast(res.data.message || "Status updated ✅", "success");
-      fetchMyJobs(user.id);
+      fetchMyJobs(user.id, jobsCurrentPage);
     } catch (err) {
       handleAuthError(err, "Failed to update status");
     }
@@ -212,7 +224,7 @@ const viewResume = async (candidateId) => {
       );
 
       showToast(res.data.message || "Applicants ranked ✅", "success");
-      fetchMyJobs(user.id);
+      fetchMyJobs(user.id, jobsCurrentPage);
     } catch (err) {
       handleAuthError(err, "Failed to rank applicants");
     } finally {
@@ -549,6 +561,24 @@ const viewResume = async (candidateId) => {
             </div>
           );
         })}
+
+        {myJobs.length > 0 && (
+          <div style={{ display: "flex", justifyContent: "center", gap: "10px", margin: "20px 0" }}>
+            <button
+              onClick={() => fetchMyJobs(user.id, jobsCurrentPage - 1)}
+              disabled={jobsCurrentPage <= 1}
+            >
+              ⬅ Prev
+            </button>
+            <span>Page {jobsCurrentPage} of {jobsTotalPages}</span>
+            <button
+              onClick={() => fetchMyJobs(user.id, jobsCurrentPage + 1)}
+              disabled={jobsCurrentPage >= jobsTotalPages}
+            >
+              Next ➡
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
