@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Routes, Route, useNavigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import Splash from "./pages/Splash";
 import Home from "./pages/Home";
 import AdminLogin from "./pages/AdminLogin";
@@ -15,15 +15,14 @@ import ResetPassword from "./pages/ResetPassword";
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
-  const navigate = useNavigate();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-      navigate("/", { replace: true });
-    }, 1000);
+    // 👇 Just hide the splash after a beat — do NOT navigate away from
+    // whatever URL the browser is actually on. Force-navigating to "/" here
+    // used to hijack every page refresh and every deep link (e.g. a
+    // password-reset email link) back to the Home page.
+    const timer = setTimeout(() => setShowSplash(false), 1000);
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (showSplash) {
