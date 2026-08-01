@@ -43,5 +43,4 @@ function verifyRole(...allowedRoles) {
     next();
   };
 }
-module.exports = verifyToken;
 module.exports = { verifyToken, verifyRole };
