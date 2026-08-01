@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 
@@ -10,9 +10,11 @@ function AdminLogin() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState(null); // {message, type}
   const navigate = useNavigate();
+  const toastTimerRef = useRef(null);
   const showToast = (message, type = "success") => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
+    toastTimerRef.current = setTimeout(() => setToast(null), 3000);
   };
   const loginAdmin = async () => {
     setIsSubmitting(true);
@@ -59,23 +61,25 @@ function AdminLogin() {
       )}
       <div className="card">
         <h1>Admin Login</h1>
-        <input
-          type="email"
-          placeholder="Enter Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <br /><br />
-        <input
-          type="password"
-          placeholder="Enter Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <br /><br />
-        <button onClick={loginAdmin} disabled={isSubmitting}>
-          {isSubmitting ? "Logging in..." : "Login"}
-        </button>
+        <form onSubmit={(e) => { e.preventDefault(); loginAdmin(); }}>
+          <input
+            type="email"
+            placeholder="Enter Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <br /><br />
+          <input
+            type="password"
+            placeholder="Enter Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <br /><br />
+          <button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Logging in..." : "Login"}
+          </button>
+        </form>
         <br /><br />
         <Link to="/forgot-password?role=admin">
           <button>Forgot Password?</button>
