@@ -24,8 +24,24 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 // Middleware
+// 👇 Allow the deployed frontend plus common local dev origins (localhost:5173/3000)
+// so the app is actually usable in local development, not just production.
+const allowedOrigins = [
+  "https://smart-hire-ai-lac.vercel.app",
+  "http://localhost:5173",
+  "http://localhost:3000",
+  process.env.FRONTEND_URL,
+].filter(Boolean);
+
 app.use(cors({
-  origin: "https://smart-hire-ai-lac.vercel.app",
+  origin: function (origin, callback) {
+    // Allow requests with no origin (e.g. curl, mobile apps, server-to-server)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true
 }));
 app.use(express.json());
