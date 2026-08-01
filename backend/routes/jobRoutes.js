@@ -150,13 +150,23 @@ router.get("/company/:companyId", verifyToken, verifyRole("company", "admin"), a
       });
     }
 
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const totalJobs = await Job.countDocuments({ postedBy: companyId });
     const jobs = await Job.find({ postedBy: companyId })
       .populate("applicants.candidate", "name email resume")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
     res.json({
       success: true,
       jobs,
+      totalJobs,
+      totalPages: Math.ceil(totalJobs / limit),
+      currentPage: page,
     });
   } catch (error) {
     res.status(500).json({
