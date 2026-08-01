@@ -23,6 +23,9 @@ function CompanyDashboard() {
   // AI score filter (applies across job cards)
   const [minScoreFilter, setMinScoreFilter] = useState(0);
 
+  // Tracks which job's "Rank All Applicants" call is currently in flight
+  const [rankingJobId, setRankingJobId] = useState(null);
+
   const showToast = (message, type = "success") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
@@ -196,6 +199,27 @@ const viewResume = async (candidateId) => {
     }
   };
 
+  // Auto-ranks every applicant for a job: scores anyone missing an AI
+  // matchScore, then refreshes the job list so cards re-sort by score.
+  const rankApplicants = async (jobId) => {
+    const token = localStorage.getItem("token");
+    setRankingJobId(jobId);
+    try {
+      const res = await axios.post(
+        `${API_URL}/api/match/rank/${jobId}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      showToast(res.data.message || "Applicants ranked ✅", "success");
+      fetchMyJobs(user.id);
+    } catch (err) {
+      handleAuthError(err, "Failed to rank applicants");
+    } finally {
+      setRankingJobId(null);
+    }
+  };
+
   if (!user) return null;
 
   return (
@@ -319,6 +343,24 @@ const viewResume = async (candidateId) => {
                   Applicants ({filteredApplicants.length} of {job.applicants.length})
                 </h4>
 
+                {job.applicants.length > 0 && (
+                  <button
+                    onClick={() => rankApplicants(job._id)}
+                    disabled={rankingJobId === job._id}
+                    style={{
+                      background: "#1565c0",
+                      color: "#fff",
+                      border: "none",
+                      padding: "6px 12px",
+                      borderRadius: "6px",
+                      cursor: rankingJobId === job._id ? "not-allowed" : "pointer",
+                      opacity: rankingJobId === job._id ? 0.7 : 1,
+                    }}
+                  >
+                    {rankingJobId === job._id ? "Ranking..." : "🤖 Rank All Applicants"}
+                  </button>
+                )}
+
                 <label style={{ fontSize: "14px" }}>
                   Min AI Score:{" "}
                   <select
@@ -374,8 +416,6 @@ const viewResume = async (candidateId) => {
                     ) : (
                       <p><i>No resume uploaded</i></p>
                     )}
-                      <p><i>No resume uploaded</i></p>
-                    )
 
                     {/* AI Match Score Section */}
                     {applicant.matchScore !== undefined && applicant.matchScore !== null && (
