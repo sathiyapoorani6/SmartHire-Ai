@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
@@ -36,9 +36,11 @@ function CandidateDashboard() {
   const [showNotifications, setShowNotifications] = useState(false);
   const navigate = useNavigate();
 
+  const toastTimerRef = useRef(null);
   const showToast = (message, type = "success") => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
+    toastTimerRef.current = setTimeout(() => setToast(null), 3000);
   };
 
   // Logs the user out and sends them back to login, with an optional reason message
@@ -149,7 +151,7 @@ function CandidateDashboard() {
         }
       );
       showToast(res.data.message || "Applied successfully ✅", "success");
-      fetchJobs();
+      fetchJobs(currentPage); // 👈 stay on the same page instead of bouncing back to page 1
     } catch (err) {
       if (err.response?.status === 401) {
         forceLogout(err.response?.data?.message || "Session expired. Please login again.");
