@@ -1,7 +1,10 @@
+require("dotenv").config();
 const mongoose = require("mongoose");
 const Job = require("./models/Job");
 
-const MONGO_URI = "mongodb://localhost:27017/smarthire_ai";
+// 👇 Use the same DB the app actually runs against, falling back to
+// localhost only for local dev when MONGO_URI isn't set.
+const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/smarthire_ai";
 
 async function migrateApplicants() {
   try {
