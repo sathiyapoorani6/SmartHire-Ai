@@ -328,4 +328,56 @@ router.put("/update-status/:jobId", verifyToken, verifyRole("company"), async (r
   }
 });
 
+// Withdraw an application — candidate can only withdraw their own,
+// and only while it's still "Applied" or "Interview Scheduled" (not after a final decision)
+router.delete("/withdraw/:jobId", verifyToken, verifyRole("candidate"), async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const candidateId = req.user.id; // 👈 from JWT, not req.body
+
+    const job = await Job.findById(jobId);
+
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        message: "Job not found",
+      });
+    }
+
+    const applicant = job.applicants.find(
+      (a) => a.candidate.toString() === candidateId
+    );
+
+    if (!applicant) {
+      return res.status(404).json({
+        success: false,
+        message: "You haven't applied for this job",
+      });
+    }
+
+    if (applicant.status === "Selected" || applicant.status === "Rejected") {
+      return res.status(400).json({
+        success: false,
+        message: "Can't withdraw — a final decision has already been made",
+      });
+    }
+
+    job.applicants = job.applicants.filter(
+      (a) => a.candidate.toString() !== candidateId
+    );
+
+    await job.save();
+
+    res.json({
+      success: true,
+      message: "Application withdrawn",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
 module.exports = router;
