@@ -1,18 +1,30 @@
-const nodemailer = require("nodemailer");
-
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
-  family: 4, // force IPv4 — Render's network can't reach Gmail over IPv6
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
-
 const DASHBOARD_URL = process.env.FRONTEND_URL || "https://smart-hire-ai-lac.vercel.app";
 const BRAND_COLOR = "#6b1f2a";
+
+// Sends via Brevo's HTTP API instead of raw SMTP — Render's network can't
+// reliably reach Gmail's SMTP servers (IPv4/IPv6 routing issues), but a
+// plain HTTPS call always works.
+async function sendViaBrevo({ to, subject, html }) {
+  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      accept: "application/json",
+      "api-key": process.env.BREVO_API_KEY,
+    },
+    body: JSON.stringify({
+      sender: { name: "SmartHire AI", email: process.env.EMAIL_USER },
+      to: [{ email: to }],
+      subject,
+      htmlContent: html,
+    }),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Brevo API error (${res.status}): ${errText}`);
+  }
+}
 
 // Wraps any inner content in a consistent, professional card layout —
 // branded header, white content card, CTA button, footer.
@@ -151,12 +163,7 @@ async function sendApplicationEmail({
       });
     }
 
-    await transporter.sendMail({
-      from: `"SmartHire AI" <${process.env.EMAIL_USER}>`,
-      to: companyEmail,
-      subject,
-      html,
-    });
+    await sendViaBrevo({ to: companyEmail, subject, html });
 
     console.log("Email sent to", companyEmail);
   } catch (error) {
@@ -185,12 +192,7 @@ async function sendResetPasswordEmail({ toEmail, name, resetLink }) {
                   Reset Password`
     );
 
-    await transporter.sendMail({
-      from: `"SmartHire AI" <${process.env.EMAIL_USER}>`,
-      to: toEmail,
-      subject: "Reset your SmartHire AI password",
-      html,
-    });
+    await sendViaBrevo({ to: toEmail, subject: "Reset your SmartHire AI password", html });
 
     console.log("Password reset email sent to", toEmail);
   } catch (error) {
