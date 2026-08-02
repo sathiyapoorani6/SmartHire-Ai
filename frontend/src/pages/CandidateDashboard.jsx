@@ -29,6 +29,7 @@ function CandidateDashboard() {
   const [totalPages, setTotalPages] = useState(1);
   const [resumeFile, setResumeFile] = useState(null);
   const [applyingJobId, setApplyingJobId] = useState(null);
+  const [withdrawingJobId, setWithdrawingJobId] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [toast, setToast] = useState(null); // {message, type}
   const [notifications, setNotifications] = useState([]);
@@ -161,6 +162,27 @@ function CandidateDashboard() {
       console.log(err);
     } finally {
       setApplyingJobId(null);
+    }
+  };
+
+  const withdrawApplication = async (jobId) => {
+    const token = localStorage.getItem("token");
+    setWithdrawingJobId(jobId);
+    try {
+      const res = await axios.delete(`${API_URL}/api/jobs/withdraw/${jobId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      showToast(res.data.message || "Application withdrawn ✅", "success");
+      fetchJobs(currentPage);
+    } catch (err) {
+      if (err.response?.status === 401) {
+        forceLogout(err.response?.data?.message || "Session expired. Please login again.");
+        return;
+      }
+      showToast(err.response?.data?.message || "Withdraw Failed", "error");
+      console.log(err);
+    } finally {
+      setWithdrawingJobId(null);
     }
   };
 
@@ -366,9 +388,25 @@ function CandidateDashboard() {
               )}
 
               {myApplication && myApplication.status === "Applied" && (
-                <p style={{ color: "green" }}>
-                  <b>✔ Applied</b> — waiting for response
-                </p>
+                <div>
+                  <p style={{ color: "green" }}>
+                    <b>✔ Applied</b> — waiting for response
+                  </p>
+                  <button
+                    onClick={() => withdrawApplication(job._id)}
+                    disabled={withdrawingJobId === job._id}
+                    style={{
+                      background: "#fff",
+                      color: "#c62828",
+                      border: "1px solid #c62828",
+                      padding: "5px 12px",
+                      borderRadius: "6px",
+                      cursor: withdrawingJobId === job._id ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    {withdrawingJobId === job._id ? "Withdrawing..." : "Withdraw Application"}
+                  </button>
+                </div>
               )}
 
               {myApplication && myApplication.status === "Interview Scheduled" && (
@@ -392,6 +430,21 @@ function CandidateDashboard() {
                   {myApplication.interviewNotes && (
                     <p><b>Notes:</b> {myApplication.interviewNotes}</p>
                   )}
+                  <button
+                    onClick={() => withdrawApplication(job._id)}
+                    disabled={withdrawingJobId === job._id}
+                    style={{
+                      background: "#fff",
+                      color: "#c62828",
+                      border: "1px solid #c62828",
+                      padding: "5px 12px",
+                      borderRadius: "6px",
+                      cursor: withdrawingJobId === job._id ? "not-allowed" : "pointer",
+                      marginTop: "8px",
+                    }}
+                  >
+                    {withdrawingJobId === job._id ? "Withdrawing..." : "Withdraw Application"}
+                  </button>
                 </div>
               )}
 
